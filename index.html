@@ -6,91 +6,131 @@
   <title>Callejero Bombers València</title>
   <meta name="description" content="Simulador de preguntas: parque y parque que coopera para cada calle de València.">
   <meta name="theme-color" content="#b3261e">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%23b3261e%27/%3E%3C/svg%3E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Callejero">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="topbar">
-    <h1>Callejero Bombers València</h1>
-    <button id="btn-home" class="link" hidden>Inicio</button>
+    <button id="btn-home" class="icon-btn" aria-label="Salir al inicio" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+    </button>
+    <div class="brand">
+      <img src="icons/icon.svg" alt="" width="28" height="28">
+      <span>Callejero Bombers</span>
+    </div>
+    <div id="top-right" class="top-right"></div>
   </header>
 
   <main>
-    <!-- Pantalla de inicio -->
+    <!-- Inicio -->
     <section id="view-home" class="view">
-      <p class="lead">Te pregunto calles al azar. Para cada una marca el <strong>parque</strong> que le corresponde y el parque que <strong>coopera</strong>. Si fallas, te corrijo con el dato oficial.</p>
-
-      <div class="card">
-        <label class="field">
-          <span>Preguntas por tanda</span>
-          <select id="opt-size">
-            <option value="10" selected>10</option>
-            <option value="20">20</option>
-            <option value="50">50</option>
-          </select>
-        </label>
-        <fieldset class="field">
-          <legend>Qué calles</legend>
-          <label class="radio"><input type="radio" name="mode" value="nuevas" checked> Aleatorias (primero las que aún no te he preguntado)</label>
-          <label class="radio"><input type="radio" name="mode" value="fallos"> Solo las que has fallado <span id="fail-count" class="muted"></span></label>
-        </fieldset>
-        <fieldset class="field">
-          <legend>Parque principal</legend>
-          <div id="opt-zones" class="chips"></div>
-        </fieldset>
-        <button id="btn-start" class="primary big">Empezar</button>
+      <div class="hero">
+        <p class="eyebrow">Oposición Bombers València</p>
+        <h1>¿Qué parque sale a esta calle?</h1>
+        <p class="hero-sub">Te pregunto calles al azar. Tú marcas el <b>parque</b> y el que <b>coopera</b>.</p>
       </div>
 
-      <div id="progress" class="card small"></div>
-      <p class="muted small" id="sources"></p>
+      <div class="stats" id="stats"></div>
+
+      <div class="cta">
+        <button id="btn-start" class="btn btn-primary btn-xl"></button>
+        <button id="btn-fails" class="btn btn-tonal btn-lg" hidden></button>
+      </div>
+
+      <details class="card options" id="options">
+        <summary>
+          <span>Opciones</span>
+          <span id="options-summary" class="muted"></span>
+        </summary>
+        <div class="opt-block">
+          <div class="opt-label">Calles por tanda</div>
+          <div class="segmented" id="opt-size" role="radiogroup" aria-label="Calles por tanda">
+            <button type="button" role="radio" data-value="10">10</button>
+            <button type="button" role="radio" data-value="20">20</button>
+            <button type="button" role="radio" data-value="50">50</button>
+          </div>
+        </div>
+        <div class="opt-block">
+          <div class="opt-label">Parques que entran</div>
+          <div id="opt-parks" class="park-toggles"></div>
+          <p class="hint">Útil para estudiar las calles de un parque cada vez.</p>
+        </div>
+        <div class="opt-block">
+          <button id="btn-reset" type="button" class="btn btn-text danger">Borrar mi progreso</button>
+        </div>
+      </details>
+
+      <p class="sources" id="sources"></p>
     </section>
 
     <!-- Pregunta -->
     <section id="view-quiz" class="view" hidden>
-      <div class="qhead">
-        <span id="q-counter" class="muted"></span>
-        <span id="q-score" class="muted"></span>
-      </div>
-      <div class="street card">
-        <div id="q-street" class="street-name"></div>
+      <div class="quiz-progress" id="q-progress" aria-hidden="true"></div>
+
+      <article class="street-card" id="street-card">
+        <div class="street-meta">
+          <span id="q-counter"></span>
+          <span id="q-streak" class="streak" hidden></span>
+        </div>
+        <div id="q-type" class="street-type"></div>
+        <h2 id="q-street" class="street-name"></h2>
         <div id="q-number" class="street-number" hidden></div>
-        <div id="q-alt" class="muted small"></div>
+        <div id="q-alt" class="street-alt"></div>
+      </article>
+
+      <div class="step" id="step-parque">
+        <div class="step-label"><span class="step-n">1</span> Parque</div>
+        <div id="ans-parque" class="park-grid"></div>
+      </div>
+      <div class="step" id="step-coopera">
+        <div class="step-label"><span class="step-n">2</span> Coopera</div>
+        <div id="ans-coopera" class="park-grid"></div>
       </div>
 
-      <div class="group">
-        <div class="group-label">Parque</div>
-        <div id="ans-parque" class="options"></div>
-      </div>
-      <div class="group">
-        <div class="group-label">Coopera</div>
-        <div id="ans-coopera" class="options"></div>
-      </div>
-
-      <button id="btn-check" class="primary big" disabled>Comprobar</button>
-
-      <div id="feedback" class="card feedback" hidden>
-        <div id="fb-title" class="fb-title"></div>
-        <div id="fb-detail"></div>
+      <div id="feedback" class="feedback" hidden aria-live="polite">
+        <div class="fb-head">
+          <div id="fb-icon" class="fb-icon"></div>
+          <div>
+            <div id="fb-title" class="fb-title"></div>
+            <div id="fb-answer" class="fb-answer"></div>
+          </div>
+        </div>
         <div id="fb-tramos"></div>
         <div id="map" class="map"></div>
-        <button id="btn-next" class="primary big">Siguiente</button>
+        <div id="map-legend" class="map-legend"></div>
       </div>
+      <div class="bottom-spacer"></div>
     </section>
 
     <!-- Resultado -->
     <section id="view-result" class="view" hidden>
-      <div class="card center">
-        <div id="r-score" class="score"></div>
+      <div class="result-hero">
+        <div id="r-ring" class="ring"></div>
+        <div id="r-title" class="r-title"></div>
         <div id="r-detail" class="muted"></div>
       </div>
-      <div class="actions">
-        <button id="btn-retry" class="primary big">Repetir las falladas</button>
-        <button id="btn-again" class="secondary big">Nueva tanda</button>
+      <div class="cta">
+        <button id="btn-retry" class="btn btn-primary btn-lg">Repetir las falladas</button>
+        <button id="btn-again" class="btn btn-tonal btn-lg">Nueva tanda</button>
+        <button id="btn-home2" class="btn btn-text">Volver al inicio</button>
       </div>
-      <ol id="r-list" class="result-list"></ol>
+      <h3 class="list-title">Repaso de la tanda</h3>
+      <ul id="r-list" class="result-list"></ul>
     </section>
   </main>
+
+  <!-- Barra inferior fija durante la corrección -->
+  <div class="bottom-bar" id="bottom-bar" hidden>
+    <button id="btn-next" class="btn btn-primary btn-xl">Siguiente</button>
+  </div>
+
+  <div id="toast" class="toast" role="status" hidden></div>
 
   <script src="vendor/leaflet/leaflet.js"></script>
   <script src="app.js"></script>

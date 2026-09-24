@@ -13,6 +13,10 @@ incorrecta, muestra la correcta con la zona y un mapa de situación.
 - Filtro por parque principal.
 - Las calles que cambian de zona a lo largo de su recorrido se preguntan con número de portal
   (p. ej. «Avinguda Pérez Galdós, nº 90») y la corrección muestra la tabla de tramos.
+- Respuesta en dos toques: parque y, al elegir el que coopera, se corrige al momento. Cada parque tiene su color
+  (botones, mapa y resultados) para ayudar a memorizar.
+- Rachas, estadísticas de progreso y resumen visual de cada tanda.
+- Se puede instalar en el móvil («Añadir a pantalla de inicio») y funciona sin conexión salvo el fondo del mapa.
 - El progreso se guarda en el propio navegador (localStorage).
 
 ### Uso
